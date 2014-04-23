@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:web="http://xmlns.jcp.org/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" id="WebApp_ID" version="2.4">
+  <display-name>Rafael - Media Fragment Server</display-name>
+  <servlet>
+    <description>
+			Media Fragment Server
+		</description>
+    <display-name>
+			Rafael - Media Fragment Server
+		</display-name>
+    <servlet-name>RestletServlet</servlet-name>
+    <servlet-class>org.restlet.ext.servlet.ServerServlet</servlet-class>
+    <load-on-startup>1</load-on-startup>
+  </servlet>
+  <context-param>
+    <param-name>org.restlet.application</param-name>
+    <param-value>org.springfield.rafael.mediafragment.restlet.MediaFragmentApplication</param-value>
+  </context-param>
+  <listener>
+    <listener-class>org.springfield.rafael.mediafragment.restlet.MediaFragmentInitialListener</listener-class>
+  </listener>
+  <servlet-mapping>
+    <servlet-name>RestletServlet</servlet-name>
+    <url-pattern>/*</url-pattern>
+  </servlet-mapping>
+</web-app>

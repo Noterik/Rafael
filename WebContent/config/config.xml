@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	
+	<!-- BASEPATH FOR VIDEOS -->
+	<entry key="basepath">/Users/pieter/Documents/Noterik/Adformatie</entry>
+	
+	<!-- CONFIGURATION FOR TEMP STORAGE OF MEDIA FRAGMENTS -->
+	<entry key="temp-mediafragment-path">/tmp/</entry>
+	<entry key="temp-mediafragment-ttl">900</entry>
+	
+	<!-- ABSTRACT LOCATOR FIELDS -->
+	<entry key="server-basepath">/mediafragmentserver</entry>	
+	<entry key="wowza-server-uri">http://127.0.0.1:8001</entry>
+
+</properties>

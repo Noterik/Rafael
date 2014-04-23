@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+<project name="Rafael" default="deploy-war">
+
+	<property name="src.dir" value="src"/>
+	<property name="build.dir" value="build"/>
+	<property name="dist.dir" value="dist"/>
+	<property name="doc.dir" value="doc"/>
+	<property name="local.dir" value="doc"/>
+	<property name="lib.dir" value="WebContent/WEB-INF/lib"/>
+    <property name="classes.dir" value="bin"/>
+	<property name="web.dir" value="WebContent"/>
+	<property name="war.dir" value="war"/>
+	<property name="webapp.name" value="rafael"/>
+	
+	<!-- Configure the context path for this application -->
+  	<property name="path"     value="/rafael"/>
+	
+	<!-- Configure properties to access the Manager application -->
+  	<property name="url"      value="http://localhost:8080/manager"/>
+  	<property name="username" value="eclipse"/>
+ 	<property name="password" value="eclipse"/>
+
+  	<!-- Configure the custom Ant tasks for the Manager application -->
+  	<!--<taskdef name="deploy"    classname="org.apache.catalina.ant.DeployTask"/>
+  	<taskdef name="reload"    classname="org.apache.catalina.ant.ReloadTask"/>
+  	<taskdef name="undeploy"  classname="org.apache.catalina.ant.UndeployTask"/>-->
+
+	<!-- create the classpath -->
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="*.jar"/>
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${classes.dir}" />
+		<mkdir dir="${war.dir}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="${dist.dir}"/>
+		<delete dir="${classes.dir}" />
+		<delete dir="${war.dir}"/>
+	</target>
+
+	<target name="compile" depends="init">
+	  <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on">
+	    <classpath>
+	        <path refid="classpath"/>
+	    </classpath>
+	  </javac>
+	</target>
+
+	<target name="javadoc" depends="init">
+	  <javadoc packagenames="*" sourcepath="${src.dir}" destdir="${doc.dir}/api"
+	  	author="true"
+        version="true"
+        use="true"
+	  	>
+	    <classpath>
+	        <path refid="classpath"/>
+	    </classpath>
+	  </javadoc>
+	</target>
+
+	<target name="build" depends="clean,compile">
+		<delete file="${build.dir}/rafael.jar"/>
+		<jar jarfile="${build.dir}/rafael.jar" basedir="${classes.dir}">
+			<manifest>
+				<attribute name="Built-By" value="Noterik B.V."/>
+			   	<attribute name="Main-Class" value="restlet.IndexApplication"/>
+			</manifest>
+		</jar>
+	</target>
+
+
+	<target name="deploy-war" depends="clean, build">
+		<copy todir="${web.dir}/WEB-INF/lib/">
+			<fileset dir="${build.dir}">
+				<include name="rafael.jar"/>
+			</fileset>
+			<fileset dir="${lib.dir}" includes="**/*.jar">
+				<exclude name="jsp-api.jar"/>
+				<exclude name="servlet.jar"/>
+			</fileset>
+		</copy>
+		<war destfile="${war.dir}/rafael.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}"/>
+		</war>
+	</target>	
+
+	<target name="deploy-local" depends="build">
+		<copy file="${build.dir}/rafael.jar" todir="${web.dir}/WEB-INF/lib" />	
+	</target>
+	
+	<target name="deploy" description="Install web application">
+    <deploy url="${url}" username="${username}" password="${password}"
+            path="${path}" war="file:${war.dir}/${webapp.name}.war"/>
+  </target>
+
+  <target name="reload" description="Reload web application">
+    <reload  url="${url}" username="${username}" password="${password}"
+            path="${path}"/>
+  </target>
+
+  <target name="undeploy" description="Remove web application">
+    <undeploy url="${url}" username="${username}" password="${password}"
+            path="${path}" failonerror="false"/>
+  </target>
+
+</project>
