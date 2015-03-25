@@ -22,19 +22,33 @@
 package org.springfield.rafael.mediafragment.server;
 
 import java.io.File;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.restlet.Client;
 import org.restlet.Request;
+import org.restlet.Response;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
 import org.restlet.data.MediaType;
+import org.restlet.data.Method;
+import org.restlet.data.Protocol;
 import org.restlet.data.ServerInfo;
 import org.restlet.data.Status;
+import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.header.Header;
+import org.restlet.engine.header.HeaderConstants;
 import org.restlet.representation.FileRepresentation;
+import org.restlet.representation.Representation;
+import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
+import org.restlet.util.Series;
 import org.springfield.rafael.mediafragment.server.MediaFragmentServer;
 import org.springfield.rafael.mediafragment.uri.AbstractLocator;
 import org.springfield.rafael.mediafragment.Fragment;
@@ -89,7 +103,7 @@ public class MediaFragmentServer extends ServerResource {
 			// get query
 			Form queryForm = getRequest().getResourceRef().getQueryAsForm(CharacterSet.UTF_8);
 			String t = queryForm.getFirstValue("t", true, "").toLowerCase();
-
+			
 			String filePath = null;
 			Status status = null;
 			// media fragment requested
@@ -104,14 +118,110 @@ public class MediaFragmentServer extends ServerResource {
 			}
 			LOG.debug("Media Fragment status "+status);
 			getResponse().setStatus(status);
-			
+						
 			if (!status.equals(Status.SUCCESS_OK)) {
 				return;
 			}
+
+			/** TODO: Abstract ticket handling in seperate class **/
+			String ticket = queryForm.getFirstValue("ticket", true, "").toLowerCase();
 			
 			File video = new File(filePath);
 			
+			Series<Header> series = ((HttpRequest) getRequest()).getHeaders();
+			Header range = series.getFirst("range");
+			
+			//Range request
+			if (range != null) {
+				String byteRange = range.getValue();
+				LOG.debug("Requested byte range "+byteRange);
+				byteRange = byteRange.substring(byteRange.indexOf("=")+1);
+				long start = Long.parseLong(byteRange.substring(0, byteRange.indexOf("-")));
+				long end = -1;
+				if (byteRange.indexOf("-") < byteRange.length()-1) {
+					end = Long.parseLong(byteRange.substring(byteRange.indexOf("-")+1));
+				}
+				
+				if (end == -1l) {
+					end = video.length();
+				}
+				
+				LOG.debug("start = "+start+" end = "+end);
+				
+				//Safari fix that does multiple 0-1 requests
+				if (start == 0l && end > 1l) {
+					//only allowed with ticket allows
+					String wowzaUri = conf.getProperty("wowza-server-uri");
+
+					//get ticket
+					StringRepresentation entity = new StringRepresentation("<fsxml><properties><uri>"+fileIdentifier+"</uri></properties></fsxml>");
+					entity.setMediaType(MediaType.TEXT_XML);
+					Request request = new Request(Method.PUT, wowzaUri+"/acl/ticketaccess/"+ticket, entity);
+					Client client = new Client(Protocol.HTTP);
+					Response response = client.handle(request);
+				
+					LOG.debug("response = "+response);
+					LOG.debug(response.getEntityAsText());
+					
+					try {
+						Document fsxml = DocumentHelper.parseText(response.getEntityAsText());
+						boolean allowed = fsxml.selectSingleNode("//properties/allowed") == null ? false : Boolean.parseBoolean(fsxml.selectSingleNode("//properties/allowed").getText());
+						
+						if (!allowed) {
+							status = Status.CLIENT_ERROR_FORBIDDEN;
+							getResponse().setStatus(status);
+							return;
+						}
+					} catch (DocumentException e) {
+						status = Status.SERVER_ERROR_INTERNAL;
+						getResponse().setStatus(status);
+						return;
+					}
+				} else {
+					//for now unlimited allowed
+				}				
+			} else {
+				//entire request only allowed once
+				String wowzaUri = conf.getProperty("wowza-server-uri");
+				
+				//get ticket
+				StringRepresentation entity = new StringRepresentation("<fsxml><properties><uri>"+fileIdentifier+"</uri></properties></fsxml>");
+				entity.setMediaType(MediaType.TEXT_XML);
+				Request request = new Request(Method.PUT, wowzaUri+"/acl/ticketaccess/"+ticket, entity);
+				Client client = new Client(Protocol.HTTP);
+				Response response = client.handle(request);
+				
+				LOG.debug("response = "+response);
+				LOG.debug(response.getEntityAsText());
+				
+				try {
+					Document fsxml = DocumentHelper.parseText(response.getEntityAsText());
+					boolean allowed = fsxml.selectSingleNode("//properties/allowed") == null ? false : Boolean.parseBoolean(fsxml.selectSingleNode("//properties/allowed").getText());
+					
+					if (!allowed) {
+						status = Status.CLIENT_ERROR_FORBIDDEN;
+						getResponse().setStatus(status);
+						return;
+					}
+				} catch (DocumentException e) {
+					status = Status.SERVER_ERROR_INTERNAL;
+					getResponse().setStatus(status);
+					return;
+				}
+			}
+
 			FileRepresentation rep = new FileRepresentation(video, MediaType.VIDEO_MP4);
+			
+			Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(HeaderConstants.ATTRIBUTE_HEADERS);
+			if (responseHeaders == null) {
+				responseHeaders = new Series(Header.class); 
+				getResponse().getAttributes().put(HeaderConstants.ATTRIBUTE_HEADERS, responseHeaders); 
+			}
+			
+			responseHeaders.add(new Header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate"));
+			responseHeaders.add(new Header("Expires", "-1"));
+			responseHeaders.add(new Header("Pragma", "no-cache"));
+			
 	        getResponse().setEntity(rep);	        
 	        return;
 		} else if (resource.exists() && resource.isDirectory()) {					
