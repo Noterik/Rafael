@@ -102,9 +102,13 @@ public class AbstractLocator {
 					return;
 				}
 				status = Status.CLIENT_ERROR_FORBIDDEN;
+				request.release();
+				response.release();
 				return;
 			} catch (DocumentException e) {
 				status = Status.SERVER_ERROR_INTERNAL;
+				request.release();
+				response.release();
 				return;
 			}
 		}		
