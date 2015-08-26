@@ -135,7 +135,7 @@ public class GlobalConfiguration {
 		 *  use restlet.LoggingResource to enable specific logging
 		 */
 		Logger.getRootLogger().setLevel(Level.OFF);
-		Logger.getLogger(PACKAGE_ROOT).setLevel(Level.DEBUG);
+		Logger.getLogger(PACKAGE_ROOT).setLevel(Level.INFO);
 			
 		System.out.println("Rafael: Initializing logging done");
 	}

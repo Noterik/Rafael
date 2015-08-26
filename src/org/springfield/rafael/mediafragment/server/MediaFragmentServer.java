@@ -21,8 +21,10 @@
 
 package org.springfield.rafael.mediafragment.server;
 
+import java.awt.List;
 import java.io.File;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,20 +33,22 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.restlet.Client;
+import org.restlet.Context;
 import org.restlet.Request;
 import org.restlet.Response;
+import org.restlet.data.CacheDirective;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
+import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
+import org.restlet.data.Parameter;
 import org.restlet.data.Protocol;
 import org.restlet.data.ServerInfo;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
-import org.restlet.engine.header.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.representation.FileRepresentation;
-import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ServerResource;
@@ -69,7 +73,7 @@ import org.springfield.rafael.mediafragment.config.GlobalConfiguration;
 
 public class MediaFragmentServer extends ServerResource {
 	private static final Logger LOG = Logger.getLogger(MediaFragmentServer.class);
-	private static final String SERVER_INFO = "Rafael/0.2.0a";
+	private static final String SERVER_INFO = "Rafael/0.2.1";
 	private static final String[] SUPPORTED_EXTENSIONS = {"mp4", "m4v"};
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	/**
@@ -82,7 +86,7 @@ public class MediaFragmentServer extends ServerResource {
 		String tempPath = conf.getProperty("temp-mediafragment-path");
 		
 		String fileIdentifier = getIdentifier(Request.getCurrent().getResourceRef().getPath(), conf.getProperty("contextPath"));
-		LOG.debug("identifier = "+fileIdentifier);
+		LOG.info("identifier = "+fileIdentifier);
 		
 		// set server info
 		ServerInfo serverInfo = new ServerInfo();
@@ -160,7 +164,11 @@ public class MediaFragmentServer extends ServerResource {
 						StringRepresentation entity = new StringRepresentation("<fsxml><properties><uri>"+fileIdentifier+"</uri></properties></fsxml>");
 						entity.setMediaType(MediaType.TEXT_XML);
 						Request request = new Request(Method.PUT, wowzaUri+"/acl/ticketaccess/"+ticket, entity);
-						Client client = new Client(Protocol.HTTP);
+						Context context = new Context();
+						Series<Parameter> parameters = context.getParameters();
+						parameters.add("socketTimeout", "1000");
+						context.setParameters(parameters);
+						Client client = new Client(context, Protocol.HTTP);
 						Response response = client.handle(request);
 					
 						LOG.debug("response = "+response);
@@ -193,12 +201,16 @@ public class MediaFragmentServer extends ServerResource {
 					StringRepresentation entity = new StringRepresentation("<fsxml><properties><uri>"+fileIdentifier+"</uri></properties></fsxml>");
 					entity.setMediaType(MediaType.TEXT_XML);
 					Request request = new Request(Method.PUT, wowzaUri+"/acl/ticketaccess/"+ticket, entity);
-					Client client = new Client(Protocol.HTTP);
+					Context context = new Context();
+					Series<Parameter> parameters = context.getParameters();
+					parameters.add("socketTimeout", "1000");
+					context.setParameters(parameters);
+					Client client = new Client(context, Protocol.HTTP);
 					Response response = client.handle(request);
 					
 					LOG.debug("response = "+response);
 					LOG.debug(response.getEntityAsText());
-					
+						
 					try {
 						Document fsxml = DocumentHelper.parseText(response.getEntityAsText());
 						boolean allowed = fsxml.selectSingleNode("//properties/allowed") == null ? false : Boolean.parseBoolean(fsxml.selectSingleNode("//properties/allowed").getText());
@@ -220,6 +232,8 @@ public class MediaFragmentServer extends ServerResource {
 
 			FileRepresentation rep = new FileRepresentation(video, MediaType.VIDEO_MP4);
 			
+			getResponse().setEntity(rep);
+			
 			if (fileIdentifier.indexOf("/domain/euscreen") > -1) {			
 				Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(HeaderConstants.ATTRIBUTE_HEADERS);
 				if (responseHeaders == null) {
@@ -227,12 +241,15 @@ public class MediaFragmentServer extends ServerResource {
 					getResponse().getAttributes().put(HeaderConstants.ATTRIBUTE_HEADERS, responseHeaders); 
 				}
 				
-				responseHeaders.add(new Header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate"));
-				responseHeaders.add(new Header("Expires", "-1"));
+				//responseHeaders.add(new Header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate"));
+				//responseHeaders.add(new Header("Expires", "-1"));
 				responseHeaders.add(new Header("Pragma", "no-cache"));
+				
+				getResponse().getEntity().setExpirationDate(new Date(0));
+				getResponse().setCacheDirectives(new ArrayList<CacheDirective>());
+				getResponse().getCacheDirectives().add(CacheDirective.noCache());				
 			}
-			
-	        getResponse().setEntity(rep);	        
+				        	        
 	        return;
 		} else if (resource.exists() && resource.isDirectory()) {					
 			//resource is a folder, check for abstract locator	
