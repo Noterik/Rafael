@@ -21,7 +21,6 @@
 
 package org.springfield.rafael.mediafragment.server;
 
-import java.awt.List;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -240,9 +239,7 @@ public class MediaFragmentServer extends ServerResource {
 					responseHeaders = new Series(Header.class); 
 					getResponse().getAttributes().put(HeaderConstants.ATTRIBUTE_HEADERS, responseHeaders); 
 				}
-				
-				//responseHeaders.add(new Header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate"));
-				//responseHeaders.add(new Header("Expires", "-1"));
+
 				responseHeaders.add(new Header("Pragma", "no-cache"));
 				
 				getResponse().getEntity().setExpirationDate(new Date(0));
