@@ -69,8 +69,9 @@ import org.springfield.rafael.mediafragment.config.GlobalConfiguration;
 
 public class MediaFragmentServer extends ServerResource {
 	private static final Logger LOG = Logger.getLogger(MediaFragmentServer.class);
-	private static final String SERVER_INFO = "Rafael/0.2.0a";
+	private static final String SERVER_INFO = "Rafael/0.2.2";
 	private static final String[] SUPPORTED_EXTENSIONS = {"mp4", "m4v"};
+	private static final String os = System.getProperty("os.name").toLowerCase();
 	
 	/**
 	 * Handle GET request
@@ -271,6 +272,13 @@ public class MediaFragmentServer extends ServerResource {
 	 * @return file identifier
 	 */
 	private String getIdentifier(String uri, String contextPath) {
+		//running windows
+		if(os.contains("windows")){
+			contextPath = contextPath.replace("\\", "/");
+		}
+		
+		LOG.debug("Uri = "+uri+" contextPath  = "+contextPath);
+		
 		String[] path = contextPath.split("/");
 
 		return uri.substring(uri.indexOf(path[path.length-1])+path[path.length-1].length());
