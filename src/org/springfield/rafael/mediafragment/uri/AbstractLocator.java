@@ -77,11 +77,17 @@ public class AbstractLocator {
 		String ticket = queryForm.getFirstValue("ticket", true);
 		LOG.debug("ticket = "+ticket);
 		LOG.debug("abstract path = "+abstractPath);
+		
 		if (ticket == null) {
 			//TODO: check with smithers if ticket is required for this video
 			status = Status.CLIENT_ERROR_FORBIDDEN;
 			return;
 		} else {
+			if (ticket.indexOf("?") > -1) {
+				ticket = ticket.substring(0, ticket.indexOf("?"));
+				LOG.debug("new ticket = "+ticket);
+			}
+			
 			String wowzaUri = conf.getProperty("wowza-server-uri");
 
 			Request request = new Request(Method.GET, wowzaUri+"/acl/ticket/"+ticket);
