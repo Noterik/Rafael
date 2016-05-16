@@ -38,7 +38,6 @@ import org.restlet.Response;
 import org.restlet.data.CacheDirective;
 import org.restlet.data.CharacterSet;
 import org.restlet.data.Form;
-import org.restlet.data.Header;
 import org.restlet.data.MediaType;
 import org.restlet.data.Method;
 import org.restlet.data.Parameter;
@@ -46,6 +45,7 @@ import org.restlet.data.Protocol;
 import org.restlet.data.ServerInfo;
 import org.restlet.data.Status;
 import org.restlet.engine.adapter.HttpRequest;
+import org.restlet.engine.header.Header;
 import org.restlet.engine.header.HeaderConstants;
 import org.restlet.representation.FileRepresentation;
 import org.restlet.representation.StringRepresentation;
@@ -72,13 +72,13 @@ import org.springfield.rafael.mediafragment.config.GlobalConfiguration;
 
 public class MediaFragmentServer extends ServerResource {
 	private static final Logger LOG = Logger.getLogger(MediaFragmentServer.class);
-	private static final String SERVER_INFO = "Rafael/0.2.2";
+	private static final String SERVER_INFO = "Rafael/0.2.3";
 	private static final String[] SUPPORTED_EXTENSIONS = {"mp4", "m4v"};
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	
 	/**
 	 * Handle GET request
-	 */
+	 */ 
 	@Get
 	public void handleGet() {
 		GlobalConfiguration conf = GlobalConfiguration.getInstance();
@@ -127,17 +127,17 @@ public class MediaFragmentServer extends ServerResource {
 				return;
 			}
 			
+			Series<Header> series = ((HttpRequest) getRequest()).getHeaders();
+			Header range = series.getFirst("range");
+			
 			File video = new File(filePath);
 			
-			if (fileIdentifier.indexOf("/domain/euscreen") > -1) {
+			if (fileIdentifier.indexOf("/domain/euscreen") > -1 || fileIdentifier.indexOf("/domain/dans/") > -1) {
 			
 				/** TODO: Abstract ticket handling in seperate class **/
 				String ticket = queryForm.getFirstValue("ticket", true, "").toLowerCase();
 				LOG.debug("ticket = "+ticket);
 
-				Series<Header> series = ((HttpRequest) getRequest()).getHeaders();
-				Header range = series.getFirst("range");
-				
 				//Range request
 				if (range != null) {
 					String byteRange = range.getValue();
@@ -234,7 +234,7 @@ public class MediaFragmentServer extends ServerResource {
 			
 			getResponse().setEntity(rep);
 			
-			if (fileIdentifier.indexOf("/domain/euscreen") > -1) {			
+			if (fileIdentifier.indexOf("/domain/euscreen") > -1 && fileIdentifier.indexOf("/domain/dans/") > -1) {			
 				Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(HeaderConstants.ATTRIBUTE_HEADERS);
 				if (responseHeaders == null) {
 					responseHeaders = new Series(Header.class); 
