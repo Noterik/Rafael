@@ -3,7 +3,7 @@
 <properties>
 	
 	<!-- BASEPATH FOR VIDEOS -->
-	<entry key="basepath">/mount</entry>
+	<entry key="basepath">/data/dansstreaming</entry>
 	
 	<!-- CONFIGURATION FOR TEMP STORAGE OF MEDIA FRAGMENTS -->
 	<entry key="temp-mediafragment-path">/tmp/</entry>
@@ -11,6 +11,6 @@
 	
 	<!-- ABSTRACT LOCATOR FIELDS -->
 	<entry key="server-basepath">/rafael</entry>	
-	<entry key="wowza-server-uri">http://82.94.187.227:8001</entry>
+	<entry key="wowza-server-uri">http://127.0.0.1:8080/lenny</entry>
 
 </properties>

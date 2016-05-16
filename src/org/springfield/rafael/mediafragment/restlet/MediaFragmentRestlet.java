@@ -40,6 +40,9 @@ public class MediaFragmentRestlet extends Router {
 		super(cx);
 		
 		this.attach("/logging", LoggingResource.class);
-		this.attachDefault(MediaFragmentServer.class);
+		
+		HeaderFilter headerFilter = new HeaderFilter(cx);
+		this.attachDefault(headerFilter);
+		headerFilter.setNext(MediaFragmentServer.class);
 	}
 }
