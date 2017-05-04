@@ -3,14 +3,15 @@
 <properties>
 	
 	<!-- BASEPATH FOR VIDEOS -->
-	<entry key="basepath">/data/dansstreaming</entry>
+	<entry key="basepath">/usr/local/data/dans</entry>
 	
 	<!-- CONFIGURATION FOR TEMP STORAGE OF MEDIA FRAGMENTS -->
 	<entry key="temp-mediafragment-path">/tmp/</entry>
 	<entry key="temp-mediafragment-ttl">900</entry>
 	
 	<!-- ABSTRACT LOCATOR FIELDS -->
-	<entry key="server-basepath">/rafael</entry>	
+	<entry key="server-basepath">/rafael</entry>
 	<entry key="wowza-server-uri">http://127.0.0.1:8080/lenny</entry>
+	<entry key="springfield-uri">http://127.0.0.1:8080/smithers2</entry>
 
 </properties>
