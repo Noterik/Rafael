@@ -3,7 +3,7 @@
 <properties>
 	
 	<!-- BASEPATH FOR VIDEOS -->
-	<entry key="basepath">/data/dansstreaming</entry>
+	<entry key="basepath">/mnt/streams</entry>
 	
 	<!-- CONFIGURATION FOR TEMP STORAGE OF MEDIA FRAGMENTS -->
 	<entry key="temp-mediafragment-path">/tmp/</entry>
