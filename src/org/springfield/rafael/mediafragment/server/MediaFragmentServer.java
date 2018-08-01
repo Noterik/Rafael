@@ -88,7 +88,7 @@ public class MediaFragmentServer extends ServerResource {
 		String basePath = conf.getProperty("basepath");
 		String tempPath = conf.getProperty("temp-mediafragment-path");
 		
-		String fileIdentifier = getIdentifier(Request.getCurrent().getResourceRef().getPath(), conf.getProperty("contextPath"));
+		String fileIdentifier = getIdentifier(Request.getCurrent().getResourceRef().getPath(true), conf.getProperty("contextPath"));
 		LOG.info("identifier = "+fileIdentifier);
 		
 		// set server info
@@ -105,6 +105,7 @@ public class MediaFragmentServer extends ServerResource {
 			// check if we support this type
 			String extension = fileIdentifier.lastIndexOf(".") == -1 ? "" : fileIdentifier.substring(fileIdentifier.lastIndexOf(".")+1);
 			if (!supportedExtension(extension)) {
+				LOG.debug("Extension " + extension + " is not supported");
 				getResponse().setStatus(Status.SERVER_ERROR_NOT_IMPLEMENTED);
 				return;
 			} else {
