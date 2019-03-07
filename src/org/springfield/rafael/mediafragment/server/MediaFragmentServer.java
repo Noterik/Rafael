@@ -159,11 +159,20 @@ public class MediaFragmentServer extends ServerResource {
 					if (start == 0l && end > 1l) {
 						//only allowed with ticket allows
 						String wowzaUri = conf.getProperty("wowza-server-uri");
-	
+						String apiKey = conf.getProperty("api-key");
+						
 						//get ticket
 						StringRepresentation entity = new StringRepresentation("<fsxml><properties><uri>"+fileIdentifier+"</uri></properties></fsxml>");
 						entity.setMediaType(MediaType.TEXT_XML);
 						Request request = new Request(Method.PUT, wowzaUri+"/acl/ticketaccess/"+ticket, entity);
+						if (apiKey != null && !apiKey.equals("")) {
+							Series<Header> headers = (Series<Header>)request.getAttributes().get("org.restlet.http.headers");
+							if (headers == null) {
+								headers = new Series<Header>(Header.class);
+								request.getAttributes().put("org.restlet.http.headers", headers);
+							}
+							headers.set("X-Api-Key", apiKey);
+						}
 						Context context = new Context();
 						Series<Parameter> parameters = context.getParameters();
 						parameters.add("socketTimeout", "1000");
@@ -196,11 +205,20 @@ public class MediaFragmentServer extends ServerResource {
 				} else {
 					//entire request only allowed once
 					String wowzaUri = conf.getProperty("wowza-server-uri");
+					String apiKey = conf.getProperty("api-key");
 					
 					//get ticket
 					StringRepresentation entity = new StringRepresentation("<fsxml><properties><uri>"+fileIdentifier+"</uri></properties></fsxml>");
 					entity.setMediaType(MediaType.TEXT_XML);
 					Request request = new Request(Method.PUT, wowzaUri+"/acl/ticketaccess/"+ticket, entity);
+					if (apiKey != null && !apiKey.equals("")) {
+						Series<Header> headers = (Series<Header>)request.getAttributes().get("org.restlet.http.headers");
+						if (headers == null) {
+							headers = new Series<Header>(Header.class);
+							request.getAttributes().put("org.restlet.http.headers", headers);
+						}
+						headers.set("X-Api-Key", apiKey);
+					}
 					Context context = new Context();
 					Series<Parameter> parameters = context.getParameters();
 					parameters.add("socketTimeout", "1000");

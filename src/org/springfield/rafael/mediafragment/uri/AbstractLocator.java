@@ -35,6 +35,8 @@ import org.restlet.data.Form;
 import org.restlet.data.Method;
 import org.restlet.data.Protocol;
 import org.restlet.data.Status;
+import org.restlet.engine.header.Header;
+import org.restlet.util.Series;
 import org.springfield.rafael.mediafragment.uri.AbstractLocator;
 import org.springfield.rafael.mediafragment.config.GlobalConfiguration;
 
@@ -89,8 +91,17 @@ public class AbstractLocator {
 			}
 			
 			String wowzaUri = conf.getProperty("wowza-server-uri");
-
+			String apiKey = conf.getProperty("api-key");
+			
 			Request request = new Request(Method.GET, wowzaUri+"/acl/ticket/"+ticket);
+			if (apiKey != null && !apiKey.equals("")) {
+				Series<Header> headers = (Series<Header>)request.getAttributes().get("org.restlet.http.headers");
+				if (headers == null) {
+					headers = new Series<Header>(Header.class);
+					request.getAttributes().put("org.restlet.http.headers", headers);
+				}
+				headers.set("X-Api-Key", apiKey);
+			}
 			Client client = new Client(Protocol.HTTP);
 			Response response = client.handle(request);
 			

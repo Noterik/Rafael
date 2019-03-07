@@ -12,5 +12,5 @@
 	<!-- ABSTRACT LOCATOR FIELDS -->
 	<entry key="server-basepath">/rafael</entry>	
 	<entry key="wowza-server-uri">http://127.0.0.1:8080/lenny</entry>
-
+	<entry key="api-key"/>
 </properties>
