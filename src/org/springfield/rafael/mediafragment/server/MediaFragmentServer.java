@@ -55,7 +55,9 @@ import org.restlet.util.Series;
 import org.springfield.rafael.mediafragment.server.MediaFragmentServer;
 import org.springfield.rafael.mediafragment.uri.AbstractLocator;
 import org.springfield.rafael.mediafragment.Fragment;
+import org.springfield.rafael.mediafragment.MediaTypes;
 import org.springfield.rafael.mediafragment.config.GlobalConfiguration;
+import org.springfield.rafael.mediafragment.fs.Media;
 
 /**
  * Media fragment server
@@ -72,8 +74,9 @@ import org.springfield.rafael.mediafragment.config.GlobalConfiguration;
 
 public class MediaFragmentServer extends ServerResource {
 	private static final Logger LOG = Logger.getLogger(MediaFragmentServer.class);
-	private static final String SERVER_INFO = "Rafael/0.2.3";
-	private static final String[] SUPPORTED_EXTENSIONS = {"mp4", "m4v"};
+	private static final String SERVER_INFO = "Rafael/0.2.5";
+	private static final String[] VIDEO_EXTENSIONS = {"mp4", "m4v"};
+	private static final String[] AUDIO_EXTENSIONS = {"m4a"};
 	private static final String os = System.getProperty("os.name").toLowerCase();
 	
 	/**
@@ -85,7 +88,7 @@ public class MediaFragmentServer extends ServerResource {
 		String basePath = conf.getProperty("basepath");
 		String tempPath = conf.getProperty("temp-mediafragment-path");
 		
-		String fileIdentifier = getIdentifier(Request.getCurrent().getResourceRef().getPath(), conf.getProperty("contextPath"));
+		String fileIdentifier = getIdentifier(Request.getCurrent().getResourceRef().getPath(true), conf.getProperty("contextPath"));
 		LOG.info("identifier = "+fileIdentifier);
 		
 		// set server info
@@ -95,13 +98,22 @@ public class MediaFragmentServer extends ServerResource {
 		
 		File resource = new File(basePath+fileIdentifier);
 		
+		MediaTypes mType;
+		
 		// check if requested file exists
 		if (resource.exists() && resource.isFile()) {
 			// check if we support this type
 			String extension = fileIdentifier.lastIndexOf(".") == -1 ? "" : fileIdentifier.substring(fileIdentifier.lastIndexOf(".")+1);
 			if (!supportedExtension(extension)) {
+				LOG.debug("Extension " + extension + " is not supported");
 				getResponse().setStatus(Status.SERVER_ERROR_NOT_IMPLEMENTED);
 				return;
+			} else {
+			    if (isAudioExtension(extension)) {
+				mType = MediaTypes.AUDIO;
+			    } else {
+				mType = MediaTypes.VIDEO;
+			    }
 			}
 			
 			// get query
@@ -130,11 +142,11 @@ public class MediaFragmentServer extends ServerResource {
 			Series<Header> series = ((HttpRequest) getRequest()).getHeaders();
 			Header range = series.getFirst("range");
 			
-			File video = new File(filePath);
+			File media = new File(filePath);
 			
-			if (fileIdentifier.indexOf("/domain/euscreen") > -1 || fileIdentifier.indexOf("/domain/dans/") > -1) {
+			if (fileIdentifier.indexOf("/domain/euscreen") > -1 || (fileIdentifier.indexOf("/domain/dans/") > -1 && new Media(fileIdentifier, mType).isPrivate())) {
 			
-				/** TODO: Abstract ticket handling in seperate class **/
+				/** TODO: Abstract ticket handling in separate class **/
 				String ticket = queryForm.getFirstValue("ticket", true, "").toLowerCase();
 				LOG.debug("ticket = "+ticket);
 
@@ -150,7 +162,7 @@ public class MediaFragmentServer extends ServerResource {
 					}
 					
 					if (end == -1l) {
-						end = video.length();
+						end = media.length();
 					}
 					
 					LOG.debug("start = "+start+" end = "+end);
@@ -247,12 +259,14 @@ public class MediaFragmentServer extends ServerResource {
 					response.release();
 				}
 			}
-
-			FileRepresentation rep = new FileRepresentation(video, MediaType.VIDEO_MP4);
 			
+			FileRepresentation rep;
+
+			rep = new FileRepresentation(media, mType.getType());
+						    
 			getResponse().setEntity(rep);
 			
-			if (fileIdentifier.indexOf("/domain/euscreen") > -1 && fileIdentifier.indexOf("/domain/dans/") > -1) {			
+			if (fileIdentifier.indexOf("/domain/euscreen") > -1 || (fileIdentifier.indexOf("/domain/dans/") > -1 && new Media(fileIdentifier, mType).isPrivate())) {			
 				Series<Header> responseHeaders = (Series<Header>) getResponse().getAttributes().get(HeaderConstants.ATTRIBUTE_HEADERS);
 				if (responseHeaders == null) {
 					responseHeaders = new Series(Header.class); 
@@ -325,11 +339,50 @@ public class MediaFragmentServer extends ServerResource {
 	private boolean supportedExtension(String extension) {
 		extension = extension.toLowerCase();
 		
-		for (int i = 0; i < SUPPORTED_EXTENSIONS.length; i++) {
-			if (SUPPORTED_EXTENSIONS[i].equals(extension)) { 
+		for (int i = 0; i < VIDEO_EXTENSIONS.length; i++) {
+			if (VIDEO_EXTENSIONS[i].equals(extension)) { 
 				return true;
 			}
-		}		
+		}	
+		for (int i = 0; i < AUDIO_EXTENSIONS.length; i++) {
+			if (AUDIO_EXTENSIONS[i].equals(extension)) { 
+				return true;
+			}
+		}
 		return false;
 	}
+	
+	/**
+	 * check if this file is containing an audio extension
+	 * 
+	 * @param extension
+	 * @return
+	 */
+	private boolean isAudioExtension(String extension) {
+	    extension = extension.toLowerCase();
+	    
+	    for (int i = 0; i < AUDIO_EXTENSIONS.length; i++) {
+		if (AUDIO_EXTENSIONS[i].equals(extension)) { 
+			return true;
+		}
+	    }		
+	    return false;
+	}
+	
+	/**
+	 * check if this is containing a video extension
+	 * 
+	 * @param extension
+	 * @return
+	 */
+	private boolean isVideoExtension(String extension) {
+	    extension = extension.toLowerCase();
+	    
+	    for (int i = 0; i < VIDEO_EXTENSIONS.length; i++) {
+		if (VIDEO_EXTENSIONS[i].equals(extension)) { 
+			return true;
+		}
+	    }		
+	    return false;
+	}	
 }
