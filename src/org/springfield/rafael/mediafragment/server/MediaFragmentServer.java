@@ -74,7 +74,7 @@ import org.springfield.rafael.mediafragment.fs.Media;
 
 public class MediaFragmentServer extends ServerResource {
 	private static final Logger LOG = Logger.getLogger(MediaFragmentServer.class);
-	private static final String SERVER_INFO = "Rafael/0.2.5";
+	private static final String SERVER_INFO = "Rafael/0.2.6";
 	private static final String[] VIDEO_EXTENSIONS = {"mp4", "m4v"};
 	private static final String[] AUDIO_EXTENSIONS = {"m4a"};
 	private static final String os = System.getProperty("os.name").toLowerCase();
